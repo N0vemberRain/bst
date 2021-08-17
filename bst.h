@@ -3,7 +3,74 @@
 #pragma once
 
 #include <iostream>
+#include <stack>
+#include <algorithm>
+#include <iterator>
 #include "item.h"
+
+template <typename Node, typename Item>
+class BSTIterator {
+public:
+    using link = Node*;
+
+    explicit BSTIterator(link head, link end) {
+        if (head == nullptr) {
+            return;
+        }
+
+        data_.push(end);
+        auto current_node = head;
+        while (current_node != nullptr) {
+            data_.push(current_node);
+            current_node = current_node->left;
+        }
+    }
+    explicit BSTIterator(link head) {
+        if (head == nullptr) {
+            return;
+        }
+
+        auto current_node = head;
+        while (current_node != nullptr) {
+            data_.push(current_node);
+            current_node = current_node->left;
+        }
+    }
+    const link& operator*() const { return data_.top(); }
+
+    BSTIterator& operator++() {
+        //data_ = data_->right;
+        auto current_node = data_.top()->right;
+        data_.pop();
+        while (current_node != nullptr) {
+            data_.push(current_node);
+            current_node = current_node->left;
+        }
+        return *this;
+    }
+    bool operator!=(const BSTIterator& other) const {
+        return this->data_.top() != other.data_.top();
+    }
+    bool operator==(const BSTIterator& other) const {
+        return !(this->data_.top() != other.data_.top());
+    }
+
+    bool empty() const {
+        return data_.empty();
+    }
+private:
+
+    //link data_;
+    std::stack<link> data_;
+};
+
+namespace std {
+    template<typename Node, typename Item>
+    struct iterator_traits<BSTIterator<Node, Item>> {
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = Node*;
+    };
+}
 
 template <typename Item, typename Key>
 class BST {
@@ -21,6 +88,7 @@ private:
 
     link head_;
     Item nullitem_;
+    link nullnode_ = new Node(nullitem_);
 
     Item searchR(link h, Key k) {
         if (h == nullptr) return nullitem_;
@@ -219,6 +287,14 @@ public:
     void join(BST<Item, Key>& st) { head_ = joinR(head_, st.head_); }
 
     void part_test(int k) { partR(head_, k); }
+
+    using iterator = BSTIterator<Node, Item>;
+    using const_iterator = BSTIterator<const Node, const Item>;
+
+    iterator begin() { return BSTIterator<Node, Item>(head_, nullnode_); }
+    iterator end() { return BSTIterator<Node, Item>(nullnode_); }
+    const_iterator begin() const;
+    const_iterator end() const;
 };
 
 void BSTTest() {
@@ -245,6 +321,16 @@ void BSTTest() {
     //const auto v = st.select(i);
     std::cout << "finded item ";
     st.showForm();
+
+    std::cout << "for loop:\n";
+
+    for (auto& it : st) {
+        std::cout << it->data;
+    }
+ 
+    std::copy(std::begin(st), std::end(st), std::ostream_iterator<Item>{std::cout, ", "});
+
+    //auto [min_it, max_it](std::minmax_element(std::begin(st), std::end(st));
 
     st.select(0).show();
     st.select(1).show();
