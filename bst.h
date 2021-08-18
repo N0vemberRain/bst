@@ -82,6 +82,26 @@ private:
         int N;
 
         Node(Item v) : data(v), left(nullptr), right(nullptr), N(0) {}
+        /*~Node() {
+            if (left != nullptr) {
+                delete left;
+                left = nullptr;
+            }
+            if (right != nullptr) {
+                delete right;
+                right = nullptr;
+            }
+        }*/
+
+        Node(const Node& other) : data(other.data), left(other.left), right(other.right), N(other.N) {}
+        Node& operator=(const Node& other) {
+            data = other.data;
+            left = other.left;
+            right = other.right;
+            N = other.N;
+
+            return *this;
+        }
     };
 
     using link = Node*;
@@ -246,7 +266,7 @@ private:
     }
 
     size_t height(const link& h) const {
-        if (h == nullptr) return -1;
+        if (h == nullptr) return 0;
         size_t u{ height(h->left) };
         size_t v{ height(h->right) };
         if (u > v)
@@ -266,7 +286,7 @@ private:
     }
 
     void showFormR(const link& h, size_t height) const {
-        if (h == nullptr) {
+        if (h == nullptr || h->data == nullitem_) {
             printEmptyNode('*', height);
             return;
         }
@@ -275,8 +295,48 @@ private:
         printNode(h->data, height);
         showFormR(h->left, height + 1);
     }
+
+    link copy(link src) {
+        if (src == nullptr) {
+            return nullptr;
+        }
+
+        auto dst = new Node(src->data);
+        dst->left = copy(src->left);
+        dst->right = copy(src->right);
+        
+        return dst;
+    }
+
+    void clearR(link h) {
+        if (h == nullptr)
+            return;
+
+        clearR(h->right);
+        clearR(h->left);
+        delete h;
+        h = nullptr;
+    }
 public:
     BST(int max_n) : head_(nullptr) {}
+    ~BST() { clear(); }
+
+    BST(const BST& other) {
+        if (head_ == other.head_)
+            return;
+        if (head_ != nullptr)
+            clear();
+        head_ = copy(other.head_);
+    }
+
+    BST& operator=(const BST& other) {
+        if (head_ == other.head_)
+            return *this;
+        if (head_ != nullptr)
+            clear();
+        head_ = copy(other.head_);
+        return *this;
+    }
 
     Item search(Key k) { return searchR(head_, k); }
     void insert(Item d) { insertT(head_, d); }
@@ -285,8 +345,11 @@ public:
     Item select(int k) { return selectR(head_, k); }
     void remove(Item v) { removeR(head_, v.key()); }
     void join(BST<Item, Key>& st) { head_ = joinR(head_, st.head_); }
+    void clear() { clearR(head_); head_ = nullptr; }
+
 
     void part_test(int k) { partR(head_, k); }
+    void copy_test(BST& src) { head_ = copy(src.head_); }
 
     using iterator = BSTIterator<Node, Item>;
     using const_iterator = BSTIterator<const Node, const Item>;
@@ -296,6 +359,44 @@ public:
     const_iterator begin() const;
     const_iterator end() const;
 };
+
+void BSTCopy_test() {
+    int N, max_N = 3;
+    //BST<Item, int> st(max_N);
+    auto st = BST<Item, int>(max_N);
+    Item tmp;
+    int i = 0;
+
+    auto i1 = Item(10, 4.32);
+    auto i2 = Item(15, 5.75);
+    auto i3 = Item(7, 10.32);
+    auto i4 = Item(30, 12.4);
+    auto i5 = Item(3, 12.4);
+    auto i6 = Item(9, 12.4);
+
+
+    st.insert(i1);
+    st.insert(i2);
+    st.insert(i3);
+    st.insert(i4);
+    st.insert(i5);
+    st.insert(i6);
+
+    auto bst = BST<Item, int>(max_N);
+    bst = st;
+
+
+    st.clear();
+
+    auto bst1 = bst;
+    bst1.showForm();
+
+    st.showForm();
+
+    /*BST<Item, int> dst(max_N);
+    dst = st;
+    dst.showForm();*/
+}
 
 void BSTTest() {
     int N, max_N = 3;
@@ -328,7 +429,7 @@ void BSTTest() {
         std::cout << it->data;
     }
  
-    std::copy(std::begin(st), std::end(st), std::ostream_iterator<Item>{std::cout, ", "});
+    //std::copy(std::begin(st), std::end(st), std::ostream_iterator<Item>{std::cout, ", "});
 
     //auto [min_it, max_it](std::minmax_element(std::begin(st), std::end(st));
 

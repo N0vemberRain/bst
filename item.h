@@ -10,6 +10,17 @@ public:
     Item() : k(MAX_KEY) {}
     explicit Item(Key k, float value) : k(k), data(value) {}
 
+    Item(const Item& other) : k(other.k), data(other.data) {}
+    Item& operator=(const Item& other) {
+        k = other.k;
+        data = other.data;
+        return *this;
+    }
+
+    bool operator==(const Item& other) const {
+        return (k == other.k && data == other.data);
+    }
+
     Key key()const noexcept { return k; }
     bool isNull() noexcept { return k == MAX_KEY; }
     void rand() noexcept {
