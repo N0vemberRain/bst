@@ -8,7 +8,8 @@
 int main()
 {
     //BSTTest();
-    BSTCopy_test();
+    //BSTCopy_test();
+    copyMove_test();
     std::cout << "Hello World!\n";
 }
 

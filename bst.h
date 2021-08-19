@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <iostream>
 #include <stack>
 #include <algorithm>
@@ -36,7 +34,18 @@ public:
             current_node = current_node->left;
         }
     }
-    const link& operator*() const { return data_.top(); }
+    link& operator*() { return data_.top(); }
+
+    BSTIterator& operator=(const BSTIterator& other) {
+        if (!data_.empty()) {
+            auto item = data_.top();
+            data_.pop();
+            delete item;
+        }
+
+        std::copy(std::begin(data_), std::end(data_), std::back_inserter(other.data_));
+        return *this;
+    }
 
     BSTIterator& operator++() {
         //data_ = data_->right;
@@ -74,7 +83,7 @@ namespace std {
 
 template <typename Item, typename Key>
 class BST {
-private:
+public:
     struct Node {
         Item data;
         Node* left;
@@ -82,16 +91,6 @@ private:
         int N;
 
         Node(Item v) : data(v), left(nullptr), right(nullptr), N(0) {}
-        /*~Node() {
-            if (left != nullptr) {
-                delete left;
-                left = nullptr;
-            }
-            if (right != nullptr) {
-                delete right;
-                right = nullptr;
-            }
-        }*/
 
         Node(const Node& other) : data(other.data), left(other.left), right(other.right), N(other.N) {}
         Node& operator=(const Node& other) {
@@ -102,8 +101,10 @@ private:
 
             return *this;
         }
+
     };
 
+private:
     using link = Node*;
 
     link head_;
@@ -159,18 +160,19 @@ private:
         h = x;
     }
 
-    void insertT(link& h, Item v) {
+    template <typename ItemType>
+    void insertT(link& h, ItemType&& v) {
         if (h == nullptr) {
-            h = new Node(v);
+            h = new Node(std::forward<ItemType>(v));
             return;
         }
 
         if (v.key() < h->data.key()) {
-            insertT(h->left, v);
+            insertT(h->left, std::forward<ItemType>(v));
             rotRight(h);
         }
         else {
-            insertT(h->right, v);
+            insertT(h->right, std::forward<ItemType>(v));
             rotLeft(h);
         }
 
@@ -322,10 +324,6 @@ public:
     ~BST() { clear(); }
 
     BST(const BST& other) {
-        if (head_ == other.head_)
-            return;
-        if (head_ != nullptr)
-            clear();
         head_ = copy(other.head_);
     }
 
@@ -339,7 +337,8 @@ public:
     }
 
     Item search(Key k) { return searchR(head_, k); }
-    void insert(Item d) { insertT(head_, d); }
+    template <typename ItemType>
+    void insert(ItemType&& d) { insertT(head_, std::forward<ItemType>(d)); }
     void show(std::ostream& os) { showR(head_, os); }
     void showForm() const { showFormR(head_, height(head_)); }
     Item select(int k) { return selectR(head_, k); }
@@ -356,9 +355,32 @@ public:
 
     iterator begin() { return BSTIterator<Node, Item>(head_, nullnode_); }
     iterator end() { return BSTIterator<Node, Item>(nullnode_); }
-    const_iterator begin() const;
-    const_iterator end() const;
+    const_iterator begin() const { return BSTIterator<const Node, const Item>(head_, nullnode_); }
+    const_iterator end() const { return BSTIterator<const Node, const Item>(nullnode_); }
 };
+
+template <typename Item, typename Key>
+void copyBST(const BST<Item, Key>& bst) {
+    for (const auto& it : bst) {
+        std::cout << it->data;
+    }
+}
+
+void copyMove_test() {
+    int N, max_N = 3;
+    //BST<Item, int> st(max_N);
+    auto st = BST<Item, int>(max_N);
+
+    auto i1 = Item(10, 4.32);
+    st.insert(i1);
+    st.insert(Item(7, 3.45));
+
+    copyBST(st);
+
+    for (auto& it : st) {
+        std::cout << it->data;
+    }
+}
 
 void BSTCopy_test() {
     int N, max_N = 3;
@@ -374,13 +396,14 @@ void BSTCopy_test() {
     auto i5 = Item(3, 12.4);
     auto i6 = Item(9, 12.4);
 
-
+    /*
     st.insert(i1);
     st.insert(i2);
     st.insert(i3);
     st.insert(i4);
     st.insert(i5);
     st.insert(i6);
+    */
 
     auto bst = BST<Item, int>(max_N);
     bst = st;
@@ -411,14 +434,14 @@ void BSTTest() {
     auto i5 = Item(3, 12.4);
     auto i6 = Item(9, 12.4);
 
-
+    /*
     st.insert(i1);
     st.insert(i2);
     st.insert(i3);
     st.insert(i4);
     st.insert(i5);
     st.insert(i6);
-
+    */
     //const auto v = st.select(i);
     std::cout << "finded item ";
     st.showForm();
