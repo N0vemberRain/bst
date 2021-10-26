@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-// 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
-
 static int MAX_KEY = 1000;
 
 using Key = int;
